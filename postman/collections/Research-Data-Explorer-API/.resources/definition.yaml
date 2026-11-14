@@ -1,0 +1,9 @@
+$kind: collection
+name: Research Data Explorer API
+description: |-
+  API collection for the Research Data Explorer backend.
+  The server runs on http://localhost:3001.
+variables:
+  - key: base_url
+    value: 'http://localhost:3001'
+    description: Base URL for the Research Data Explorer API

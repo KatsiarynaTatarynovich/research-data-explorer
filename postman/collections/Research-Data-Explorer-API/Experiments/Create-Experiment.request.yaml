@@ -1,0 +1,15 @@
+$kind: http-request
+name: Create Experiment
+order: 3000
+method: POST
+url: '{{base_url}}/api/experiments'
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "id": "3",
+      "name": "Experiment 3",
+      "description": "This is the third experiment"
+    }

@@ -1,0 +1,9 @@
+$kind: http-request
+name: Get Experiment by ID
+order: 2000
+method: GET
+url: '{{base_url}}/api/experiments/{{experiment_id}}'
+pathVariables:
+  - key: experiment_id
+    value: '1'
+    description: The ID of the experiment to retrieve

@@ -1,19 +1,23 @@
-import crypto from 'crypto';
-import { CreateExperimentInput, Experiment } from './experiments.types.js';
+import { randomUUID } from 'node:crypto';
+import type { CreateExperimentInput, Experiment } from './experiments.types.js';
 
-const experiments: Array<Experiment> = [];
+// In-memory only: emptied whenever the server restarts (including tsx watch reloads).
+const experiments: Experiment[] = [];
 
-export const listExperiments = (): Array<Experiment> =>
-  experiments ? experiments : [];
+// Return copies so callers can never mutate the stored data.
+export const listExperiments = (): Experiment[] =>
+  experiments.map((experiment) => ({ ...experiment }));
 
-export const findExperimentById = (id: string): Experiment | undefined =>
-  experiments.find((exp) => exp.id === id);
+export const findExperimentById = (id: string): Experiment | undefined => {
+  const experiment = experiments.find((exp) => exp.id === id);
+  return experiment ? { ...experiment } : undefined;
+};
 
 export const createExperiment = ({
   name,
   description,
 }: CreateExperimentInput): Experiment => {
-  const experiment = { id: crypto.randomUUID(), name, description };
-  experiments.push({ ...experiment });
-  return experiment;
+  const experiment: Experiment = { id: randomUUID(), name, description };
+  experiments.push(experiment);
+  return { ...experiment };
 };

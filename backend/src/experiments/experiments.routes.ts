@@ -1,27 +1,35 @@
 import express from 'express';
 import { sendError } from '../http/send-error.js';
 import {
-  listExperiments,
   createExperiment,
   findExperimentById,
+  getExperiments,
 } from './experiments.store.js';
 
 const router = express.Router();
 
-router.get('/', (_request, response) => {
-  response.json(listExperiments());
-});
-
-router.get('/:id', (request, response) => {
-  const experiment = findExperimentById(request.params.id);
-  if (!experiment) {
-    sendError(response, 404, 'Experiment not found');
-    return;
+router.get('/', async (_request, response, next) => {
+  try {
+    response.json(await getExperiments());
+  } catch (error) {
+    next(error);
   }
-  response.json(experiment);
 });
 
-router.post('/', (request, response) => {
+router.get('/:id', async (request, response, next) => {
+  try {
+    const experiment = await findExperimentById(request.params.id);
+    if (!experiment) {
+      sendError(response, 404, 'Experiment not found');
+      return;
+    }
+    response.json(experiment);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/', async (request, response, next) => {
   if (!request.is('application/json')) {
     sendError(response, 415, 'Content-Type must be application/json');
     return;
@@ -53,7 +61,12 @@ router.post('/', (request, response) => {
     return;
   }
 
-  response.status(201).json(createExperiment({ name, description }));
+  try {
+    const experiment = await createExperiment({ name, description });
+    response.status(201).json(experiment);
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;

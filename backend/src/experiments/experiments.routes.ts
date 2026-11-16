@@ -1,12 +1,35 @@
 import express from 'express';
 import { sendError } from '../http/send-error.js';
+import { isUuid } from '../utils/is-uuid.js';
 import {
   createExperiment,
   findExperimentById,
   getExperiments,
+  deleteExperimentById,
 } from './experiments.store.js';
 
 const router = express.Router();
+
+router.delete('/:id', async (request, response, next) => {
+  try {
+    const { id } = request.params;
+
+    if (!isUuid(id)) {
+      sendError(response, 400, 'Invalid experiment ID');
+      return;
+    }
+
+    if (!(await findExperimentById(id))) {
+      sendError(response, 404, 'Experiment not found');
+      return;
+    }
+
+    await deleteExperimentById(id);
+    response.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.get('/', async (_request, response, next) => {
   try {
@@ -18,7 +41,14 @@ router.get('/', async (_request, response, next) => {
 
 router.get('/:id', async (request, response, next) => {
   try {
-    const experiment = await findExperimentById(request.params.id);
+    const { id } = request.params;
+
+    if (!isUuid(id)) {
+      sendError(response, 400, 'Invalid experiment ID');
+      return;
+    }
+
+    const experiment = await findExperimentById(id);
     if (!experiment) {
       sendError(response, 404, 'Experiment not found');
       return;

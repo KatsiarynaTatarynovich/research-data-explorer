@@ -85,11 +85,73 @@
   overflow-wrap: anywhere;
 }
 
-.experiment p {
+.experiment-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.experiment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.experiment-body p {
   color: var(--text-muted);
   margin-top: 2px;
   white-space: pre-line;
   overflow-wrap: anywhere;
+}
+
+.experiment-actions {
+  flex-shrink: 0;
+}
+
+.confirm {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--danger-border);
+  border-radius: 6px;
+  background: var(--danger-bg);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.confirm p {
+  overflow-wrap: anywhere;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.item-error {
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  color: var(--success);
+  font-size: 0.9375rem;
+}
+
+.notice:not(:empty) {
+  margin-bottom: 12px;
+}
+
+.panel-header h2:focus {
+  outline: none;
+}
+
+.panel-header h2:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .form {
@@ -182,7 +244,24 @@
   color: var(--accent);
 }
 
-.button.secondary:hover {
+.button.secondary:hover:not(:disabled) {
   background: transparent;
   color: var(--accent-hover);
+}
+
+.button.small {
+  padding: 4px 12px;
+  font-size: 0.875rem;
+}
+
+.button.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface);
+}
+
+.button.danger:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+  filter: brightness(0.9);
 }

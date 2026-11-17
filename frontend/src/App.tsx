@@ -50,6 +50,17 @@ function App() {
     [listLoaded, reload],
   );
 
+  const handleDeleted = useCallback((id: string) => {
+    setListState((previous) =>
+      previous.status === 'success'
+        ? {
+            ...previous,
+            experiments: previous.experiments.filter((e) => e.id !== id),
+          }
+        : previous,
+    );
+  }, []);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -58,7 +69,11 @@ function App() {
       </header>
 
       <main className="layout">
-        <ExperimentList state={listState} onRetry={reload} />
+        <ExperimentList
+          state={listState}
+          onRetry={reload}
+          onDeleted={handleDeleted}
+        />
         <NewExperimentForm onCreated={handleCreated} />
       </main>
     </div>

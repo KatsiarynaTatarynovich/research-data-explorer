@@ -111,6 +111,17 @@ export const createExperiment = async (
   return body;
 };
 
+/**
+ * DELETE /api/experiments/:id → 204 with no body.
+ * Errors: 400 (malformed id), 404 (no such experiment), 500. A 404 is thrown
+ * as an ApiError with status 404 so the caller can treat it as "already gone".
+ */
+export const deleteExperiment = async (id: string): Promise<void> => {
+  await request(`${EXPERIMENTS_URL}/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+};
+
 /** Turns anything thrown by this module into a user-facing message. */
 export const toUserMessage = (error: unknown): string =>
   error instanceof ApiError ? error.message : UNEXPECTED_RESPONSE_MESSAGE;

@@ -36,3 +36,13 @@ export const createExperiment = async ({
 export const deleteExperimentById = async (id: string): Promise<void> => {
   await pool.query('DELETE FROM experiments WHERE id = $1', [id]);
 };
+
+export const getSamplesByExperimentId = async (
+  experimentId: string,
+): Promise<any[]> => {
+  const { rows } = await pool.query(
+    'SELECT experiments.name, samples.code FROM samples inner join experiments ON samples.experiment_id = experiments.id WHERE experiments.id = $1',
+    [experimentId],
+  );
+  return rows;
+};

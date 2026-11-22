@@ -6,6 +6,7 @@ import {
   findExperimentById,
   getExperiments,
   deleteExperimentById,
+  getSamplesByExperimentId,
 } from './experiments.store.js';
 
 const router = express.Router();
@@ -94,6 +95,28 @@ router.post('/', async (request, response, next) => {
   try {
     const experiment = await createExperiment({ name, description });
     response.status(201).json(experiment);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/:id/samples', async (request, response, next) => {
+  try {
+    const { id } = request.params;
+
+    if (!isUuid(id)) {
+      sendError(response, 400, 'Invalid experiment ID');
+      return;
+    }
+
+    const experiment = await findExperimentById(id);
+    if (!experiment) {
+      sendError(response, 404, 'Experiment not found');
+      return;
+    }
+
+    const samples = await getSamplesByExperimentId(id);
+    response.json(samples);
   } catch (error) {
     next(error);
   }

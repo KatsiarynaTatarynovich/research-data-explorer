@@ -4,9 +4,8 @@ import {
   PG_FOREIGN_KEY_VIOLATION,
   PG_UNIQUE_VIOLATION,
 } from '../db-errors.js';
-import { findExperimentById } from '../experiments/experiments.store.js';
+import { ensureExperimentExists } from '../http/guards.js';
 import { sendError } from '../http/send-error.js';
-import { isUuid } from '../utils/is-uuid.js';
 import { createSample, getSamplesByExperimentId } from './samples.store.js';
 
 // Mounted at /api/experiments/:experimentId/samples (see app.ts).
@@ -14,26 +13,6 @@ import { createSample, getSamplesByExperimentId } from './samples.store.js';
 const router = express.Router({ mergeParams: true });
 
 type ExperimentParams = { experimentId: string };
-
-/**
- * Sends 400/404 and returns false if the experiment id is malformed or
- * doesn't exist. Distinguishes "no such experiment" (404) from
- * "experiment exists but has no samples" (200 []).
- */
-const ensureExperimentExists = async (
-  experimentId: string,
-  response: express.Response,
-): Promise<boolean> => {
-  if (!isUuid(experimentId)) {
-    sendError(response, 400, 'Invalid experiment ID');
-    return false;
-  }
-  if (!(await findExperimentById(experimentId))) {
-    sendError(response, 404, 'Experiment not found');
-    return false;
-  }
-  return true;
-};
 
 router.get<'/', ExperimentParams>('/', async (request, response, next) => {
   try {

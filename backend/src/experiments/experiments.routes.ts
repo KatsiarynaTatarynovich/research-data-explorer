@@ -1,4 +1,5 @@
 import express from 'express';
+import { parseListQuery } from '../http/pagination.js';
 import { sendError } from '../http/send-error.js';
 import { isUuid } from '../utils/is-uuid.js';
 import {
@@ -31,13 +32,18 @@ router.delete('/:id', async (request, response, next) => {
   }
 });
 
+// GET /api/experiments?search=&page=&pageSize=
+// → 200 { items, total, page, pageSize, totalPages }, ordered by name.
+// A page past the end returns empty items with the real total/totalPages.
 router.get('/', async (request, response, next) => {
-  try {
-    const search = (request.query.search as string) || '';
-    const page = parseInt((request.query.page as string) || '1', 10);
-    const pageSize = parseInt((request.query.pageSize as string) || '10', 10);
+  const listQuery = parseListQuery(request.query);
+  if (!listQuery.ok) {
+    sendError(response, 400, listQuery.message);
+    return;
+  }
 
-    response.json(await getExperiments(search, page, pageSize));
+  try {
+    response.json(await getExperiments(listQuery.value));
   } catch (error) {
     next(error);
   }

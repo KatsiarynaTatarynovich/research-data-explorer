@@ -1,35 +1,46 @@
 import { randomUUID } from 'node:crypto';
 import type { CreateExperimentInput, Experiment } from './experiments.types.js';
 import { pool } from '../db.js';
+import {
+  escapeLike,
+  type ListQuery,
+  type Paginated,
+} from '../http/pagination.js';
 
-// `id` breaks ties: rows inserted in one transaction share the same now().
-export const getExperiments = async (
-  search: string,
-  page: number,
-  pageSize: number,
-): Promise<{
-  items: Experiment[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}> => {
+/**
+ * One page of experiments whose name contains `search` (case-insensitive),
+ * ordered by name. `id` breaks ties so equal names keep a stable order across
+ * pages — without it, a row could appear on two pages or on none.
+ */
+export const getExperiments = async ({
+  search,
+  page,
+  pageSize,
+}: ListQuery): Promise<Paginated<Experiment>> => {
   const offset = (page - 1) * pageSize;
-  const pattern = `%${search}%`;
+  // Escape % and _ so the user's text matches literally.
+  const pattern = `%${escapeLike(search)}%`;
 
-  const result = await pool.query<Experiment>(
-    'SELECT id, name, description, created_at FROM experiments WHERE name ILIKE $1 ORDER BY name ASC, id ASC LIMIT $2 OFFSET $3',
-    [pattern, pageSize, offset],
-  );
+  // Independent queries, so run them at the same time.
+  const [itemsResult, countResult] = await Promise.all([
+    pool.query<Experiment>(
+      `SELECT id, name, description, created_at FROM experiments
+       WHERE name ILIKE $1 ESCAPE '\\'
+       ORDER BY name ASC, id ASC
+       LIMIT $2 OFFSET $3`,
+      [pattern, pageSize, offset],
+    ),
+    // COUNT(*) is a bigint, which `pg` returns as a string.
+    pool.query<{ total: string }>(
+      `SELECT COUNT(*) AS total FROM experiments WHERE name ILIKE $1 ESCAPE '\\'`,
+      [pattern],
+    ),
+  ]);
 
-  const countResult = await pool.query<{ total: number }>(
-    'SELECT COUNT(*) AS total FROM experiments WHERE name ILIKE $1',
-    [pattern],
-  );
   const total = Number(countResult.rows[0].total);
 
   return {
-    items: result.rows,
+    items: itemsResult.rows,
     total,
     page,
     pageSize,

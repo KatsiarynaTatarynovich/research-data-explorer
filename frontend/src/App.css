@@ -66,6 +66,48 @@
   text-align: center;
 }
 
+.search-field {
+  margin-bottom: 6px;
+}
+
+.search-field input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+#experiment-search-status {
+  min-height: 1.3em;
+  margin-bottom: 8px;
+}
+
+/* Previous rows stay visible (dimmed) while the next page loads. */
+.experiment-list.is-updating {
+  opacity: 0.55;
+  transition: opacity 120ms ease-in;
+}
+
+.empty .button {
+  margin-top: 12px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .experiment-list {
   list-style: none;
   margin: 0;
@@ -87,14 +129,17 @@
   overflow-wrap: anywhere;
 }
 
+/* Buttons sit beside the text when there's room, and wrap below it on narrow
+   screens instead of squeezing the description into a thin column. */
 .experiment-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px 12px;
 }
 
 .experiment-body {
-  flex: 1;
+  flex: 1 1 240px;
   min-width: 0;
 }
 

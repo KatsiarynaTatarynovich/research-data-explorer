@@ -25,11 +25,52 @@ const isExperiment = (value: unknown): value is Experiment =>
   typeof value.name === 'string' &&
   typeof value.description === 'string';
 
+/** Matches the API's limits (backend/src/http/pagination.ts). */
+export const PAGE_SIZE = 10;
+export const MAX_SEARCH_LENGTH = 100;
+
+export type ExperimentQuery = {
+  /** Case-insensitive "name contains"; empty means all. */
+  search: string;
+  /** 1-based. */
+  page: number;
+  pageSize: number;
+};
+
+export type ExperimentPage = {
+  items: Experiment[];
+  total: number;
+  page: number;
+  pageSize: number;
+  /** 0 when there are no results. */
+  totalPages: number;
+};
+
+const isCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 0;
+
+const isExperimentPage = (value: unknown): value is ExperimentPage =>
+  isRecord(value) &&
+  Array.isArray(value.items) &&
+  value.items.every(isExperiment) &&
+  isCount(value.total) &&
+  isCount(value.page) &&
+  isCount(value.pageSize) &&
+  isCount(value.totalPages);
+
+/** GET /api/experiments?search=&page=&pageSize= → one page, ordered by name. */
 export const fetchExperiments = async (
+  { search, page, pageSize }: ExperimentQuery,
   signal?: AbortSignal,
-): Promise<Experiment[]> => {
-  const body = await request(EXPERIMENTS_URL, { signal });
-  if (!Array.isArray(body) || !body.every(isExperiment)) {
+): Promise<ExperimentPage> => {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  if (search !== '') params.set('search', search);
+
+  const body = await request(`${EXPERIMENTS_URL}?${params}`, { signal });
+  if (!isExperimentPage(body)) {
     throw new ApiError(UNEXPECTED_RESPONSE_MESSAGE, null);
   }
   return body;

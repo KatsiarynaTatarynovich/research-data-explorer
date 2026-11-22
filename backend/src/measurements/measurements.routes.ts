@@ -1,64 +1,25 @@
 import express from 'express';
-import {
-  isPgError,
-  PG_FOREIGN_KEY_VIOLATION,
-  PG_UNIQUE_VIOLATION,
-} from '../db-errors.js';
-import { findExperimentById } from '../experiments/experiments.store.js';
+import { isPgError, PG_FOREIGN_KEY_VIOLATION } from '../db-errors.js';
+import { ensureSampleInExperiment } from '../http/guards.js';
 import { sendError } from '../http/send-error.js';
-import { isUuid } from '../utils/is-uuid.js';
+import { parseIsoDateTime } from '../utils/parse-iso-datetime.js';
 import {
   createMeasurement,
   getMeasurementsBySampleId,
 } from './measurements.store.js';
-import { getSampleById } from '../samples/samples.store.js';
 
-// Mounted at /api/experiments/:experimentId/samples/:sampleId/measurements (see app.ts).
-// mergeParams lets this router read :experimentId from the parent path.
+// Mounted at /api/experiments/:experimentId/samples/:sampleId/measurements
+// (see app.ts). mergeParams lets this router read both parent params.
 const router = express.Router({ mergeParams: true });
 
-type ExperimentParams = { experimentId: string; sampleId: string };
+type SampleParams = { experimentId: string; sampleId: string };
 
-/**
- * Sends 400/404 and returns false if the experiment id is malformed or
- * doesn't exist. Distinguishes "no such experiment" (404) from
- * "experiment exists but has no samples" (200 []).
- */
-const ensureExperimentExists = async (
-  experimentId: string,
-  response: express.Response,
-): Promise<boolean> => {
-  if (!isUuid(experimentId)) {
-    sendError(response, 400, 'Invalid experiment ID');
-    return false;
-  }
-  if (!(await findExperimentById(experimentId))) {
-    sendError(response, 404, 'Experiment not found');
-    return false;
-  }
-  return true;
-};
-
-const ensureSampleExists = async (
-  sampleId: string,
-  response: express.Response,
-): Promise<boolean> => {
-  if (!isUuid(sampleId)) {
-    sendError(response, 400, 'Invalid sample ID');
-    return false;
-  }
-  if (!(await getSampleById(sampleId))) {
-    sendError(response, 404, 'Sample not found');
-    return false;
-  }
-  return true;
-};
-
-router.get<'/', ExperimentParams>('/', async (request, response, next) => {
+router.get<'/', SampleParams>('/', async (request, response, next) => {
   try {
     const { experimentId, sampleId } = request.params;
-    if (!(await ensureExperimentExists(experimentId, response))) return;
-    if (!(await ensureSampleExists(sampleId, response))) return;
+    if (!(await ensureSampleInExperiment(experimentId, sampleId, response))) {
+      return;
+    }
 
     response.json(await getMeasurementsBySampleId(sampleId));
   } catch (error) {
@@ -66,7 +27,7 @@ router.get<'/', ExperimentParams>('/', async (request, response, next) => {
   }
 });
 
-router.post<'/', ExperimentParams>('/', async (request, response, next) => {
+router.post<'/', SampleParams>('/', async (request, response, next) => {
   if (!request.is('application/json')) {
     sendError(response, 415, 'Content-Type must be application/json');
     return;
@@ -93,8 +54,10 @@ router.post<'/', ExperimentParams>('/', async (request, response, next) => {
     return;
   }
 
-  if (typeof body.value !== 'number') {
-    sendError(response, 400, 'Field value must be a number');
+  // JSON can't encode NaN/Infinity, but check anyway: double precision would
+  // accept them and they'd break any later calculation.
+  if (typeof body.value !== 'number' || !Number.isFinite(body.value)) {
+    sendError(response, 400, 'Field value must be a finite number');
     return;
   }
 
@@ -102,9 +65,7 @@ router.post<'/', ExperimentParams>('/', async (request, response, next) => {
     sendError(response, 400, 'Field unit must be a string');
     return;
   }
-
   const unit = body.unit.trim();
-
   if (unit === '') {
     sendError(response, 400, 'Field unit cannot be empty');
     return;
@@ -114,36 +75,46 @@ router.post<'/', ExperimentParams>('/', async (request, response, next) => {
     sendError(response, 400, 'Field measurement_type must be a string');
     return;
   }
-
   const measurement_type = body.measurement_type.trim();
-
   if (measurement_type === '') {
     sendError(response, 400, 'Field measurement_type cannot be empty');
     return;
   }
 
+  // Optional: when the measurement was taken. Omitted → the database's now().
+  let measured_at: Date | undefined;
+  if ('measured_at' in body && body.measured_at !== undefined) {
+    const parsed =
+      typeof body.measured_at === 'string'
+        ? parseIsoDateTime(body.measured_at)
+        : null;
+    if (!parsed) {
+      sendError(
+        response,
+        400,
+        'Field measured_at must be an ISO 8601 date-time with a time zone, e.g. 2026-11-22T14:30:00Z',
+      );
+      return;
+    }
+    measured_at = parsed;
+  }
+
   const { experimentId, sampleId } = request.params;
 
   try {
-    if (!(await ensureExperimentExists(experimentId, response))) return;
-    if (!(await ensureSampleExists(sampleId, response))) return;
+    if (!(await ensureSampleInExperiment(experimentId, sampleId, response))) {
+      return;
+    }
 
     const measurement = await createMeasurement({
       sample_id: sampleId,
       value: body.value,
-      unit: unit,
-      measurement_type: measurement_type,
+      unit,
+      measurement_type,
+      measured_at,
     });
     response.status(201).json(measurement);
   } catch (error) {
-    if (isPgError(error, PG_UNIQUE_VIOLATION)) {
-      sendError(
-        response,
-        409,
-        `Measurement for sample "${sampleId}" already exists`,
-      );
-      return;
-    }
     if (isPgError(error, PG_FOREIGN_KEY_VIOLATION)) {
       // The sample was deleted between our check and the INSERT.
       sendError(response, 404, 'Sample not found');

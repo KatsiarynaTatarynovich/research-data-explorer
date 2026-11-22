@@ -13,12 +13,19 @@ export const getSamplesByExperimentId = async (
   return rows;
 };
 
-export const getSampleById = async (id: string): Promise<Sample | null> => {
+/**
+ * Finds a sample only if it belongs to the given experiment, so a URL like
+ * /experiments/A/samples/<B's sample> can't reach another experiment's data.
+ */
+export const findSampleInExperiment = async (
+  experimentId: string,
+  sampleId: string,
+): Promise<Sample | undefined> => {
   const { rows } = await pool.query<Sample>(
-    'SELECT id, experiment_id, code FROM samples WHERE id = $1',
-    [id],
+    'SELECT id, experiment_id, code FROM samples WHERE id = $1 AND experiment_id = $2',
+    [sampleId, experimentId],
   );
-  return rows[0] ?? null;
+  return rows[0];
 };
 
 export const createSample = async ({

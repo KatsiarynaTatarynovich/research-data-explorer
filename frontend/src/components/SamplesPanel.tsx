@@ -6,6 +6,7 @@ import {
   sortByCode,
   type Sample,
 } from '../api/samples';
+import { SampleItem } from './SampleItem';
 
 type SamplesState =
   | { status: 'loading' }
@@ -140,9 +141,11 @@ export function SamplesPanel({
       {state.status === 'success' && state.samples.length > 0 && (
         <ul className="sample-list">
           {state.samples.map((sample) => (
-            <li key={sample.id} className="sample-chip">
-              {sample.code}
-            </li>
+            <SampleItem
+              key={sample.id}
+              experimentId={experimentId}
+              sample={sample}
+            />
           ))}
         </ul>
       )}

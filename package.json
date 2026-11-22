@@ -4,6 +4,7 @@
   "scripts": {
     "dev:frontend": "pnpm --filter ./frontend dev",
     "dev:backend": "pnpm --filter ./backend dev",
+    "db:seed:demo": "docker compose exec -T db psql -U research -d research_data -v ON_ERROR_STOP=1 < backend/seeds/demo.sql",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

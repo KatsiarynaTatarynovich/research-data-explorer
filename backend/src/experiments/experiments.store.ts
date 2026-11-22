@@ -1,13 +1,51 @@
 import { randomUUID } from 'node:crypto';
 import type { CreateExperimentInput, Experiment } from './experiments.types.js';
 import { pool } from '../db.js';
+import {
+  escapeLike,
+  type ListQuery,
+  type Paginated,
+} from '../http/pagination.js';
 
-// `id` breaks ties: rows inserted in one transaction share the same now().
-export const getExperiments = async (): Promise<Experiment[]> => {
-  const { rows } = await pool.query<Experiment>(
-    'SELECT id, name, description, created_at FROM experiments ORDER BY created_at ASC, id ASC',
-  );
-  return rows;
+/**
+ * One page of experiments whose name contains `search` (case-insensitive),
+ * ordered by name. `id` breaks ties so equal names keep a stable order across
+ * pages — without it, a row could appear on two pages or on none.
+ */
+export const getExperiments = async ({
+  search,
+  page,
+  pageSize,
+}: ListQuery): Promise<Paginated<Experiment>> => {
+  const offset = (page - 1) * pageSize;
+  // Escape % and _ so the user's text matches literally.
+  const pattern = `%${escapeLike(search)}%`;
+
+  // Independent queries, so run them at the same time.
+  const [itemsResult, countResult] = await Promise.all([
+    pool.query<Experiment>(
+      `SELECT id, name, description, created_at FROM experiments
+       WHERE name ILIKE $1 ESCAPE '\\'
+       ORDER BY name ASC, id ASC
+       LIMIT $2 OFFSET $3`,
+      [pattern, pageSize, offset],
+    ),
+    // COUNT(*) is a bigint, which `pg` returns as a string.
+    pool.query<{ total: string }>(
+      `SELECT COUNT(*) AS total FROM experiments WHERE name ILIKE $1 ESCAPE '\\'`,
+      [pattern],
+    ),
+  ]);
+
+  const total = Number(countResult.rows[0].total);
+
+  return {
+    items: itemsResult.rows,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
 };
 
 export const findExperimentById = async (

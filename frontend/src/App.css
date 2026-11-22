@@ -105,6 +105,76 @@
 
 .experiment-actions {
   flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.samples {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.small-text {
+  font-size: 0.875rem;
+}
+
+.sample-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sample-chip {
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.sample-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sample-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.sample-form-row .field {
+  flex: 1 1 160px;
+  gap: 4px;
+}
+
+.sample-form-row .field label {
+  font-size: 0.875rem;
+}
+
+.sample-form-row .field input {
+  padding: 4px 8px;
+}
+
+.alert.compact {
+  padding: 8px 10px;
+  gap: 8px;
+  font-size: 0.875rem;
 }
 
 .confirm {

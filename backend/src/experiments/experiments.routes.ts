@@ -19,12 +19,12 @@ router.delete('/:id', async (request, response, next) => {
       return;
     }
 
-    if (!(await findExperimentById(id))) {
+    // One query: the DELETE itself tells us whether the row existed.
+    if (!(await deleteExperimentById(id))) {
       sendError(response, 404, 'Experiment not found');
       return;
     }
 
-    await deleteExperimentById(id);
     response.status(204).send();
   } catch (error) {
     next(error);

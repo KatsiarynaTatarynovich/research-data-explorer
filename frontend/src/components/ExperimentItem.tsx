@@ -5,6 +5,7 @@ import {
   toUserMessage,
   type Experiment,
 } from '../api/experiments';
+import { SamplesPanel } from './SamplesPanel';
 
 type Mode = 'idle' | 'confirming' | 'deleting';
 
@@ -17,6 +18,7 @@ type ExperimentItemProps = {
 export function ExperimentItem({ experiment, onDeleted }: ExperimentItemProps) {
   const [mode, setMode] = useState<Mode>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [samplesOpen, setSamplesOpen] = useState(false);
 
   // Blocks a second DELETE if the confirm button is clicked twice quickly.
   const deletingRef = useRef(false);
@@ -58,6 +60,7 @@ export function ExperimentItem({ experiment, onDeleted }: ExperimentItemProps) {
   };
 
   const confirmTextId = `delete-confirm-${experiment.id}`;
+  const samplesPanelId = `samples-${experiment.id}`;
 
   return (
     <li className="experiment" aria-busy={mode === 'deleting'}>
@@ -69,8 +72,18 @@ export function ExperimentItem({ experiment, onDeleted }: ExperimentItemProps) {
           )}
         </div>
 
-        {mode === 'idle' && (
-          <div className="experiment-actions">
+        <div className="experiment-actions">
+          <button
+            type="button"
+            className="button secondary small"
+            aria-expanded={samplesOpen}
+            aria-controls={samplesOpen ? samplesPanelId : undefined}
+            aria-label={`${samplesOpen ? 'Hide' : 'Show'} samples for ${experiment.name}`}
+            onClick={() => setSamplesOpen((open) => !open)}
+          >
+            {samplesOpen ? 'Hide samples' : 'Samples'}
+          </button>
+          {mode === 'idle' && (
             <button
               ref={deleteButtonRef}
               type="button"
@@ -83,8 +96,8 @@ export function ExperimentItem({ experiment, onDeleted }: ExperimentItemProps) {
             >
               Delete
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {mode !== 'idle' && (
@@ -99,7 +112,8 @@ export function ExperimentItem({ experiment, onDeleted }: ExperimentItemProps) {
           }}
         >
           <p id={confirmTextId}>
-            Delete “{experiment.name}”? This can’t be undone.
+            Delete “{experiment.name}” and all of its samples? This can’t be
+            undone.
           </p>
           <div className="confirm-actions">
             <button
@@ -127,6 +141,14 @@ export function ExperimentItem({ experiment, onDeleted }: ExperimentItemProps) {
         <p className="item-error" role="alert">
           <strong>Could not delete “{experiment.name}”.</strong> {error}
         </p>
+      )}
+
+      {samplesOpen && (
+        <SamplesPanel
+          id={samplesPanelId}
+          experimentId={experiment.id}
+          experimentName={experiment.name}
+        />
       )}
     </li>
   );

@@ -31,9 +31,13 @@ router.delete('/:id', async (request, response, next) => {
   }
 });
 
-router.get('/', async (_request, response, next) => {
+router.get('/', async (request, response, next) => {
   try {
-    response.json(await getExperiments());
+    const search = (request.query.search as string) || '';
+    const page = parseInt((request.query.page as string) || '1', 10);
+    const pageSize = parseInt((request.query.pageSize as string) || '10', 10);
+
+    response.json(await getExperiments(search, page, pageSize));
   } catch (error) {
     next(error);
   }

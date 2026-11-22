@@ -3,11 +3,38 @@ import type { CreateExperimentInput, Experiment } from './experiments.types.js';
 import { pool } from '../db.js';
 
 // `id` breaks ties: rows inserted in one transaction share the same now().
-export const getExperiments = async (): Promise<Experiment[]> => {
-  const { rows } = await pool.query<Experiment>(
-    'SELECT id, name, description, created_at FROM experiments ORDER BY created_at ASC, id ASC',
+export const getExperiments = async (
+  search: string,
+  page: number,
+  pageSize: number,
+): Promise<{
+  items: Experiment[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}> => {
+  const offset = (page - 1) * pageSize;
+  const pattern = `%${search}%`;
+
+  const result = await pool.query<Experiment>(
+    'SELECT id, name, description, created_at FROM experiments WHERE name ILIKE $1 ORDER BY name ASC, id ASC LIMIT $2 OFFSET $3',
+    [pattern, pageSize, offset],
   );
-  return rows;
+
+  const countResult = await pool.query<{ total: number }>(
+    'SELECT COUNT(*) AS total FROM experiments WHERE name ILIKE $1',
+    [pattern],
+  );
+  const total = Number(countResult.rows[0].total);
+
+  return {
+    items: result.rows,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
 };
 
 export const findExperimentById = async (

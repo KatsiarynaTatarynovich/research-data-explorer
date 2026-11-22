@@ -8,6 +8,7 @@ import {
 import experimentsRouter from './experiments/experiments.routes.js';
 import { sendError } from './http/send-error.js';
 import samplesRouter from './samples/samples.routes.js';
+import measurementsRouter from './measurements/measurements.routes.js';
 
 const app = express();
 app.use(express.json());
@@ -18,6 +19,10 @@ app.get('/api/health', (_request, response) => {
 
 app.use('/api/experiments', experimentsRouter);
 app.use('/api/experiments/:experimentId/samples', samplesRouter);
+app.use(
+  '/api/experiments/:experimentId/samples/:sampleId/measurements',
+  measurementsRouter,
+);
 
 // Catch-all: no route above matched.
 app.use((_request, response) => {

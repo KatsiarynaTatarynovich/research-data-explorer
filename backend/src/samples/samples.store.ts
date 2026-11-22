@@ -13,6 +13,14 @@ export const getSamplesByExperimentId = async (
   return rows;
 };
 
+export const getSampleById = async (id: string): Promise<Sample | null> => {
+  const { rows } = await pool.query<Sample>(
+    'SELECT id, experiment_id, code FROM samples WHERE id = $1',
+    [id],
+  );
+  return rows[0] ?? null;
+};
+
 export const createSample = async ({
   experiment_id,
   code,

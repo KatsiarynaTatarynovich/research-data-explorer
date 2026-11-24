@@ -321,6 +321,46 @@
   padding: 4px 8px;
 }
 
+/* CSV import: collapsed by default so the samples panel stays short. */
+.import {
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.import summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  width: fit-content;
+}
+
+.import-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.import-form .hint {
+  overflow-wrap: anywhere;
+}
+
+.import-form input[type='file'] {
+  padding: 4px;
+}
+
+.alert .table-scroll {
+  width: 100%;
+}
+
+/* Problems are sentences; let them wrap instead of forcing a scroll. */
+.invalid-records td {
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
 .alert.compact {
   padding: 8px 10px;
   gap: 8px;

@@ -1,0 +1,8 @@
+sample_code,measurement_type,value,unit,measured_at
+S01,protein_concentration,2.4,mg/mL,2026-11-20T09:15:00Z
+S02,protein_concentration,abc,mg/mL,2026-11-20T09:20:00Z
+,protein_concentration,1.8,mg/mL,2026-11-20T09:25:00Z
+S04,protein_concentration,2.9,,2026-11-20T09:30:00Z
+S05,protein_concentration,2.2,mg/mL,2026-02-30T09:35:00Z
+S06,protein_concentration,3.4,mg/mL,20.11.2026
+S07,protein_concentration,2,7,mg/mL,2026-11-20T09:45:00Z

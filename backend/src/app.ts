@@ -9,6 +9,7 @@ import experimentsRouter from './experiments/experiments.routes.js';
 import { sendError } from './http/send-error.js';
 import samplesRouter from './samples/samples.routes.js';
 import measurementsRouter from './measurements/measurements.routes.js';
+import importsRouter from './imports/imports.routes.js';
 
 const app = express();
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use(
   '/api/experiments/:experimentId/samples/:sampleId/measurements',
   measurementsRouter,
 );
+app.use('/api/experiments/:experimentId/imports', importsRouter);
 
 // Catch-all: no route above matched.
 app.use((_request, response) => {

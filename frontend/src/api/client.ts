@@ -4,11 +4,14 @@
 /** An error whose `message` is safe and useful to show to the user. */
 export class ApiError extends Error {
   readonly status: number | null;
+  /** `error.details` from the response, if any (e.g. an import's invalid rows). Unchecked. */
+  readonly details: unknown;
 
-  constructor(message: string, status: number | null) {
+  constructor(message: string, status: number | null, details?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -69,6 +72,7 @@ export const request = async (
     throw new ApiError(
       getApiErrorMessage(body) ?? fallbackMessageForStatus(response.status),
       response.status,
+      isRecord(body) && isRecord(body.error) ? body.error.details : undefined,
     );
   }
 

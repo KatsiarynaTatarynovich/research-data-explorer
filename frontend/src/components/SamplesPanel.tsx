@@ -6,6 +6,7 @@ import {
   sortByCode,
   type Sample,
 } from '../api/samples';
+import { ImportCsvForm } from './ImportCsvForm';
 import { SampleItem } from './SampleItem';
 
 type SamplesState =
@@ -193,6 +194,15 @@ export function SamplesPanel({
           {notice}
         </p>
       </form>
+
+      {/* An import can add samples and measurements, so reload the list.
+          This also closes open measurement tables, so none shows stale rows. */}
+      <ImportCsvForm
+        id={`${id}-import`}
+        experimentId={experimentId}
+        experimentName={experimentName}
+        onImported={reload}
+      />
     </section>
   );
 }
